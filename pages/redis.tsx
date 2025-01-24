@@ -1,4 +1,4 @@
-// pages/demo.tsx
+// pages/redis.tsx
 import { useState } from "react";
 
 export default function ProductsPage() {
@@ -8,7 +8,7 @@ export default function ProductsPage() {
   const [retrievedProduct, setRetrievedProduct] = useState<any>(null);
 
   const handleSaveProduct = async () => {
-    const response = await fetch("/api/demo", {
+    const response = await fetch("/api/redis", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -21,7 +21,7 @@ export default function ProductsPage() {
   };
 
   const handleGetProduct = async () => {
-    const response = await fetch(`/api/demo?id=${productId}`);
+    const response = await fetch(`/api/redis?id=${productId}`);
     const data = await response.json();
     if (data.name) {
       setRetrievedProduct(data);

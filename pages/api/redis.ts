@@ -1,8 +1,8 @@
-// pages/api/demos.ts
+// pages/api/rediss.ts
 import { NextApiRequest, NextApiResponse } from "next";
 import client from "../../lib/redis";
 
-class Demo {
+class Product {
   name: string;
   price: number;
 
@@ -13,14 +13,14 @@ class Demo {
 }
 
 // 儲存產品到 Redis
-async function saveDemo(demo: Demo) {
-  const id = `demo:${Date.now()}`;
-  await client.set(id, JSON.stringify(demo));
+async function saveProduct(product: Product) {
+  const id = `product:${Date.now()}`;
+  await client.set(id, JSON.stringify(product));
   return id;
 }
 
 // 查詢產品
-async function findDemoById(id: string) {
+async function findProductById(id: string) {
   const data = await client.get(id);
   return data ? JSON.parse(data) : null;
 }
@@ -32,20 +32,20 @@ export default async function handler(
 ) {
   if (req.method === "POST") {
     const { name, price } = req.body;
-    const newDemo = new Demo(name, price);
-    const demoId = await saveDemo(newDemo);
-    res.status(200).json({ message: "Demo saved", id: demoId });
+    const newProduct = new Product(name, price);
+    const redisId = await saveProduct(newProduct);
+    res.status(200).json({ message: "Product saved", id: redisId });
   } else if (req.method === "GET") {
     const { id } = req.query;
     if (typeof id === "string") {
-      const demo = await findDemoById(id);
-      if (demo) {
-        res.status(200).json(demo);
+      const redis = await findProductById(id);
+      if (redis) {
+        res.status(200).json(redis);
       } else {
-        res.status(404).json({ message: "Demo not found" });
+        res.status(404).json({ message: "Product not found" });
       }
     } else {
-      res.status(400).json({ message: "Invalid demo ID" });
+      res.status(400).json({ message: "Invalid redis ID" });
     }
   } else {
     res.status(405).json({ message: "Method Not Allowed" });
