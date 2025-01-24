@@ -38,9 +38,9 @@ export default async function handler(
   } else if (req.method === "GET") {
     const { id } = req.query;
     if (typeof id === "string") {
-      const redis = await findProductById(id);
-      if (redis) {
-        res.status(200).json(redis);
+      const product = await findProductById(id);
+      if (product) {
+        res.status(200).json(product);
       } else {
         res.status(404).json({ message: "Product not found" });
       }

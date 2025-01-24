@@ -1,97 +1,76 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import client from "../../lib/redis";
 
+class Product {
+  name: string;
+  price: number;
+
+  constructor(name: string, price: number) {
+    this.name = name;
+    this.price = price;
+  }
+}
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const { action } = req.query;
-  const { key, value } = req.body;
+  const { action, queryName } = req.query;
+  const { key: name, value: price } = req.body;
+  console.log(req.body);
 
-  switch (req.method) {
-    case "GET": {
-      switch (action) {
-        case "read": {
-          if (!key || typeof key !== "string") {
-            return res.status(400).json({ error: "Key is required" });
-          }
-          try {
-            const value = await client.get(key);
-            if (value) {
-              res.status(200).json({ key, value });
-            } else {
-              res.status(404).json({ error: "Key not found" });
-            }
-          } catch (error) {
-            res.status(500).json({ error: "Failed to retrieve data" });
-          }
-          break;
-        }
+  async function saveProduct(product: Product) {
+    await client.set(product.name, JSON.stringify(product));
+    return product.name;
+  }
 
-        case "exists": {
-          if (!key || typeof key !== "string") {
-            return res.status(400).json({ error: "Key is required" });
-          }
-          try {
-            const exists = await client.exists(key);
-            res.status(200).json({ exists: exists > 0 });
-          } catch (error) {
-            res.status(500).json({ error: "Failed to check data" });
-          }
-          break;
-        }
+  async function findProductById(name: string) {
+    const data = await client.get(name);
+    return data ? JSON.parse(data) : null;
+  }
 
-        default:
-          res.status(400).json({ error: "Invalid action for GET method" });
-          break;
+  switch (action) {
+    case "create":
+    case "update":
+      if (!name || !price) {
+        return res.status(400).json({ error: "lost value" });
+      }
+      try {
+        const newProduct = new Product(name, price);
+        const redisId = await saveProduct(newProduct);
+        res.status(200).json({ message: "good" });
+      } catch (error) {
+        res.status(500).json({ error: "die" });
       }
       break;
-    }
-    case "POST": {
-      switch (action) {
-        case "create": {
-          if (!key || !value) {
-            return res.status(400).json({ error: "lost value" });
-          }
-          try {
-            await client.set(key, value);
-            res.status(200).json({ message: "good" });
-          } catch (error) {
-            res.status(500).json({ error: "die" });
-          }
-          break;
+    case "read":
+      if (!queryName) {
+        return res.status(400).json({ error: "lost key" });
+      }
+      try {
+        const product = await findProductById(queryName as string);
+        if (product) {
+          res.status(200).json(product);
+        } else {
+          res.status(404).json({ error: "404" });
         }
-
-        default:
-          res.status(400).json({ error: "??" });
-          break;
+      } catch (error) {
+        res.status(500).json({ error: "die" });
       }
       break;
-    }
-    case "DELETE": {
-      switch (action) {
-        case "delete": {
-          if (!key || typeof key !== "string") {
-            return res.status(400).json({ error: "Key is required" });
-          }
-          try {
-            await client.del(key);
-            res.status(200).json({ message: "Data deleted successfully" });
-          } catch (error) {
-            res.status(500).json({ error: "Failed to delete data" });
-          }
-          break;
-        }
-
-        default:
-          res.status(400).json({ error: "Invalid action for DELETE method" });
-          break;
+    case "delete":
+      if (!name) {
+        return res.status(400).json({ error: "lost name" });
+      }
+      try {
+        await client.del(name);
+        res.status(200).json({ message: "good" });
+      } catch (error) {
+        res.status(500).json({ error: "die" });
       }
       break;
-    }
-
     default:
-      res.status(405).json({ error: "Method Not Allowed" });
+      res.status(400).json({ error: "what happen" });
       break;
   }
 }
