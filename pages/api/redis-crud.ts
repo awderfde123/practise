@@ -17,7 +17,6 @@ export default async function handler(
 ) {
   const { action, queryName } = req.query;
   const { key: name, value: price } = req.body;
-  console.log(req.body);
 
   async function saveProduct(product: Product) {
     await client.set(product.name, JSON.stringify(product));
